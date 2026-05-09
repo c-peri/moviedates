@@ -7,6 +7,8 @@ import com.moviedates.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -29,5 +31,26 @@ public class UserService {
 
     public User getUserById(Long id) {
         return userRepository.findById(id).orElse(null);
+    }
+
+
+    public RegisteredUser updatePreferences(Long userId, List<Integer> genres, List<Integer> movies) {
+        RegisteredUser user = (RegisteredUser) userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPreferredGenres(genres);
+        user.setFavouriteMovies(movies);
+
+        return userRepository.save(user);
+    }
+
+    public User updateProfile(Long userId, String name, String photoUrl) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setDisplayName(name);
+        user.setPhotoUrl(photoUrl);
+
+        return userRepository.save(user);
     }
 }
