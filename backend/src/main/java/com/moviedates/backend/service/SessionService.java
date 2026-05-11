@@ -4,8 +4,12 @@ import com.moviedates.backend.model.Session;
 import com.moviedates.backend.model.User;
 import com.moviedates.backend.repository.SessionRepository;
 import com.moviedates.backend.repository.UserRepository;
+import com.moviedates.backend.repository.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -14,6 +18,7 @@ public class SessionService {
     @Autowired
     private SessionRepository sessionRepository;
     private UserRepository userRepository;
+    private VoteRepository voteRepository;
 
     public Session createNewSession() {
         Session session = new Session();
@@ -39,5 +44,15 @@ public class SessionService {
         }
 
         return sessionRepository.save(session);
+    }
+
+    public Integer checkForForceMatch(Session session) {
+        long minutesActive = Duration.between(session.getStartTime(), LocalDateTime.now()).toMinutes();
+
+        if (minutesActive >= 5 || session.getTotalSwipes() >= 50) {
+            return voteRepository.findMostVotedMovie(session.getId());
+        }
+
+        return null; // No force match needed yet
     }
 }

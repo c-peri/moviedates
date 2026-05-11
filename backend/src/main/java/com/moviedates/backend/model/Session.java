@@ -22,7 +22,16 @@ public class Session {
 
     private boolean active = true;
 
+    private boolean finished = false;
+
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    private LocalDateTime swipingStartedAt;
+
+    private Integer totalSwipes = 0;
+
+    private long matchedMovieId;
+
 
     // A session contains many Users (Polymorphism applied here)
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
