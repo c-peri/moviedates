@@ -14,7 +14,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
 
-    // Inject your filter
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
@@ -28,7 +27,6 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                // 1. Set session management to stateless (crucial for JWT)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -37,7 +35,6 @@ public class SecurityConfig {
                             .requestMatchers("/api/movies/**").permitAll()
                             .anyRequest().authenticated()
                 )
-                // 2. Add your JWT filter to the chain
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

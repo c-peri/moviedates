@@ -21,14 +21,6 @@ public class UserService {
         return userRepository.save(guest);
     }
 
-    public User registerUser(String name, String email, String password) {
-        RegisteredUser user = new RegisteredUser();
-        user.setDisplayName(name);
-        user.setEmail(email);
-        user.setPassword(password);
-        return userRepository.save(user);
-    }
-
     public User getUserById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
@@ -38,6 +30,9 @@ public class UserService {
         RegisteredUser user = (RegisteredUser) userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!(user instanceof RegisteredUser registeredUser)) {
+            throw new IllegalArgumentException("Preferences can only be updated for registered user accounts.");
+        }
         user.setPreferredGenres(genres);
         user.setFavouriteMovies(movies);
 

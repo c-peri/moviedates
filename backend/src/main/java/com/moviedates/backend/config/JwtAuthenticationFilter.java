@@ -1,5 +1,6 @@
 package com.moviedates.backend.config;
 
+import com.moviedates.backend.repository.UserRepository;
 import com.moviedates.backend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,11 +19,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor // Generates constructor for final fields
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService; // Real DB lookup
+    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -33,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        final String userEmail;
+        final String tokenSubject;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -42,18 +44,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         jwt = authHeader.substring(7);
         try {
-            userEmail = jwtService.extractEmail(jwt);
+            tokenSubject = jwtService.extractEmail(jwt);
 
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // PRODUCTION STEP: Load user from DB
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (tokenSubject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = null;
 
-                // Check if token is valid AND matches the user in our DB
-                if (jwtService.isTokenValid(jwt, userDetails)) {
+                if (tokenSubject.startsWith("GUEST_")) {
+                    try {
+                        Long guestId = Long.parseLong(tokenSubject.replace("GUEST_", ""));
+                        userDetails = userRepository.findById(guestId).orElse(null);
+                    } catch (NumberFormatException nfe) {
+                        logger.error("Invalid structural layout for Guest token ID parameter format.");
+                    }
+                } else {
+                    userDetails = this.userDetailsService.loadUserByUsername(tokenSubject);
+                }
+
+                if (userDetails != null && jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
-                            userDetails.getAuthorities() // Real authorities from DB
+                            userDetails.getAuthorities()
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
@@ -61,7 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Log error: Token might be malformed or expired
+            System.out.println("Security Error: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

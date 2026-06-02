@@ -27,7 +27,12 @@ public class AuthController {
                 request.get("password"),
                 request.get("name")
         );
-        return ResponseEntity.ok(user);
+        String token = jwtService.generateToken(user.getEmail());
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "user", user
+        ));
     }
 
     @PostMapping("/login")
@@ -36,15 +41,18 @@ public class AuthController {
                 request.get("email"),
                 request.get("password")
         );
-        // In a real app, we would return a JWT token here
-        return ResponseEntity.ok(user);
+        String token = jwtService.generateToken(user.getEmail());
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "user", user
+        ));
     }
 
     @PostMapping("/guest")
     public ResponseEntity<?> registerGuest(@RequestBody Map<String, String> request) {
         GuestUser guest = authService.createGuest(request.get("nickname"));
 
-        // Use a unique string like "GUEST_123" so the JWT is valid
         String token = jwtService.generateToken("GUEST_" + guest.getId());
 
         return ResponseEntity.ok(Map.of(

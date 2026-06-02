@@ -1,29 +1,48 @@
 package com.moviedates.backend.service;
 
+import com.moviedates.backend.model.RegisteredUser;
 import com.moviedates.backend.model.Session;
 import com.moviedates.backend.model.User;
 import com.moviedates.backend.repository.SessionRepository;
 import com.moviedates.backend.repository.UserRepository;
 import com.moviedates.backend.repository.VoteRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class SessionService {
 
     @Autowired
     private SessionRepository sessionRepository;
+    @Autowired
     private UserRepository userRepository;
+    @Autowired
     private VoteRepository voteRepository;
 
     public Session createNewSession() {
         Session session = new Session();
-        // Generates a short 6-character code
         session.setCode(UUID.randomUUID().toString().substring(0, 6).toUpperCase());
+        return sessionRepository.save(session);
+    }
+
+    @Autowired
+    private RecommendationService recommendationService;
+
+    public Session startSession(String roomCode) {
+        Session session = sessionRepository.findByCode(roomCode)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        List<Integer> deck = recommendationService.generateWeightedDeck(session);
+
+        session.setMovieDeck(deck);
+        session.setSwipingStartedAt(LocalDateTime.now());
+
         return sessionRepository.save(session);
     }
 
@@ -31,14 +50,14 @@ public class SessionService {
         return sessionRepository.findByCode(code).orElse(null);
     }
 
-    public Session addUserToSession(String roomCode, Long userId) {
-        Session session = sessionRepository.findByCode(roomCode)
+
+    public Session joinSession(String code, Long userId) {
+        Session session = sessionRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Polymorphism in action: 'participants' list accepts any User subclass
         if (!session.getParticipants().contains(user)) {
             session.getParticipants().add(user);
         }
@@ -46,13 +65,22 @@ public class SessionService {
         return sessionRepository.save(session);
     }
 
-    public Integer checkForForceMatch(Session session) {
-        long minutesActive = Duration.between(session.getStartTime(), LocalDateTime.now()).toMinutes();
+    public boolean isForceMatchCriteriaMet(Session session) {
+        boolean fiveMinsPassed = session.getSwipingStartedAt() != null &&
+                session.getSwipingStartedAt().isBefore(LocalDateTime.now().minusMinutes(5));
 
-        if (minutesActive >= 5 || session.getTotalSwipes() >= 50) {
-            return voteRepository.findMostVotedMovie(session.getId());
+        boolean fiftyTotalSwipes = session.getTotalSwipes() >= 50;
+
+        boolean everyoneMetMinimum = false;
+
+        Long participantsWhoFinished = voteRepository.countUsersMinimumSwipes(session.getId(), 15L);
+
+        if (participantsWhoFinished != null) {
+            everyoneMetMinimum = participantsWhoFinished >= session.getParticipants().size();
         }
 
-        return null; // No force match needed yet
+        return fiveMinsPassed && fiftyTotalSwipes && everyoneMetMinimum;
     }
+
+
 }

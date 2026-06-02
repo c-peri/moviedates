@@ -14,13 +14,13 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    private final String SECRET_STRING = "your-very-secure-and-very-long-secret-key-here-123456";
+    private final String SECRET_STRING = "very-secure-and-very-long-secret-key-123456";
     private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
     private static final long EXPIRATION_TIME = 864_000_000;
 
     public String generateToken(String email) {
         return Jwts.builder()
-                .subject(email) // If this fails, try .setSubject(email)
+                .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SECRET_KEY)
@@ -28,8 +28,8 @@ public class JwtService {
     }
 
     public String extractEmail(String token) {
-        return Jwts.parser() // Changed from parserBuilder()
-                .verifyWith(SECRET_KEY) // The direct way in 0.12.x
+        return Jwts.parser()
+                .verifyWith(SECRET_KEY)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()

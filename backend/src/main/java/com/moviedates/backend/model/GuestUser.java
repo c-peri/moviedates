@@ -15,13 +15,11 @@ public class GuestUser extends User {
 
     @Override
     public String getPassword() {
-        // Guests don't have passwords, so we return null or empty
         return null;
     }
 
     @Override
     public String getUsername() {
-        // For guests, we can use their unique ID or a "guest_" prefix
-        return "guest_" + this.getId();
+        return "Guest_" + this.getId();
     }
 }

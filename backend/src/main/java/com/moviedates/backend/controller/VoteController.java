@@ -3,21 +3,20 @@ package com.moviedates.backend.controller;
 import com.moviedates.backend.dto.VoteRequest;
 import com.moviedates.backend.model.Session;
 import com.moviedates.backend.repository.SessionRepository;
-import com.moviedates.backend.repository.UserRepository;
 import com.moviedates.backend.repository.VoteRepository;
+import com.moviedates.backend.service.RecommendationService;
+import com.moviedates.backend.service.SessionService;
 import com.moviedates.backend.service.VoteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
-
-import com.moviedates.backend.model.Vote;
-import com.moviedates.backend.model.User;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/votes") // Changed from /api/swipes
+@RequestMapping("/api/votes")
 public class VoteController {
 
     @Autowired
@@ -27,12 +26,14 @@ public class VoteController {
     @Autowired
     private VoteRepository voteRepository;
     @Autowired
-    private UserRepository userRepository;
-
+    private SessionService sessionService;
+    @Autowired
+    private RecommendationService recommendationService;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @PostMapping
     public ResponseEntity<?> handleSwipe(@RequestBody VoteRequest request) {
-        // 1. Fetch the Session
         Session session = sessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
@@ -40,42 +41,49 @@ public class VoteController {
             return ResponseEntity.ok(Map.of("status", "finished", "match", session.getMatchedMovieId()));
         }
 
-        // 1. Initialize timer on the very first swipe of the session
         if (session.getSwipingStartedAt() == null) {
             session.setSwipingStartedAt(LocalDateTime.now());
+            sessionRepository.save(session);
         }
 
-        // 2. Save the Vote
-        Vote vote = new Vote();
-        vote.setUser(userRepository.getReferenceById(request.getUserId()));
-        vote.setSession(session);
-        vote.setMovieId(request.getMovieId());
-        vote.setAccepted(request.isAccepted());
-        voteRepository.save(vote);
+        boolean isMatch = voteService.submitSwipe(
+                request.getUserId(),
+                session.getCode(),
+                request.getMovieId(),
+                request.isAccepted()
+        );
 
-        // 3. Increment Swipe Count
         session.setTotalSwipes(session.getTotalSwipes() + 1);
 
-        // 4. Check for Natural Match (Everyone liked it)
         long userCount = session.getParticipants().size();
         if (voteRepository.isMovieAMatch(session.getId(), request.getMovieId(), userCount)) {
             return finishSession(session, request.getMovieId());
         }
 
-        // 5. Check for Forced Match (Swipe Limit Hit)
-        if (session.getTotalSwipes() >= 50) {
+        if (sessionService.isForceMatchCriteriaMet(session)) {
             Integer topMovie = voteRepository.findMostVotedMovie(session.getId());
             return finishSession(session, topMovie);
         }
 
         sessionRepository.save(session);
-        return ResponseEntity.ok(Map.of("match", false));
+        return ResponseEntity.ok(Map.of("match", isMatch));
     }
 
     private ResponseEntity<?> finishSession(Session session, Integer movieId) {
         session.setMatchedMovieId(movieId);
         session.setFinished(true);
         sessionRepository.save(session);
-        return ResponseEntity.ok(Map.of("match", true, "movieId", movieId, "forced", session.getTotalSwipes() >= 50));
+
+        Map<String, Object> matchUpdate = Map.of(
+                "status", "MATCHED",
+                "movieId", movieId,
+                "movieDetails", recommendationService.fetchSingleMovieDetails(movieId)
+        );
+
+        String destination = "/topic/session/" + session.getCode();
+        messagingTemplate.convertAndSend(destination, matchUpdate, (Map<String, Object>) null);
+
+        return ResponseEntity.ok(matchUpdate);
     }
+
 }

@@ -1,8 +1,11 @@
 package com.moviedates.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import jakarta.persistence.*;
@@ -26,21 +29,24 @@ public abstract class User implements UserDetails{
 
     private String photoUrl;
 
+
     public abstract boolean isGuest();
 
     @Column(unique = true)
     private String email;
 
+    @ManyToMany(mappedBy = "participants")
+    @JsonIgnoreProperties({"movieDeck", "participants", "active", "createdAt"})
+    private List<Session> sessions = new ArrayList<>();
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // For now, give everyone the "ROLE_USER" authority
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
     public String getUsername() {
-        // Spring Security uses "Username" to mean the unique identifier (email)
-        return this.displayName; // Or return email if you move email to the base class
+        return email;
     }
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }

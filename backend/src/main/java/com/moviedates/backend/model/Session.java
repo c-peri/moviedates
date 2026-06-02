@@ -1,5 +1,8 @@
 package com.moviedates.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,14 +35,24 @@ public class Session {
 
     private long matchedMovieId;
 
+    @ElementCollection
+    @CollectionTable(name = "session_movie_deck", joinColumns = @JoinColumn(name = "session_id"))
+    @Column(name = "movie_id")
+    private List<Integer> movieDeck = new ArrayList<>();
 
-    // A session contains many Users (Polymorphism applied here)
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "session_id")
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "session_participants",
+            joinColumns = @JoinColumn(name = "session_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @JsonIgnoreProperties({"sessions", "password", "preferredGenres", "role", "authorities"})
     private List<User> participants = new ArrayList<>();
 
     public boolean isActive(){
-        if (createdAt.isBefore(LocalDateTime.now().minusHours(24))) {
+        if (this.active && createdAt.isBefore(LocalDateTime.now().minusHours(24))) {
             this.active = false;
         }
         return this.active;

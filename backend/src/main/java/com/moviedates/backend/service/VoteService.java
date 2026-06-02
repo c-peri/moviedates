@@ -2,6 +2,7 @@ package com.moviedates.backend.service;
 
 import com.corundumstudio.socketio.SocketIOServer; // Add this
 import com.moviedates.backend.model.Session;
+import com.moviedates.backend.model.User;
 import com.moviedates.backend.model.Vote;
 import com.moviedates.backend.repository.SessionRepository;
 import com.moviedates.backend.repository.VoteRepository;
@@ -19,14 +20,18 @@ public class VoteService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private SocketIOServer socketServer; // Inject the server here
+    private SocketIOServer socketServer;
 
     public boolean submitSwipe(Long userId, String roomCode, Integer movieId, boolean accepted) {
         Session session = sessionRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         Vote vote = new Vote();
-        vote.setUser(userRepository.findById(userId).get());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        vote.setUser(user);
         vote.setSession(session);
         vote.setMovieId(movieId);
         vote.setAccepted(accepted);
@@ -36,7 +41,6 @@ public class VoteService {
         if (accepted) {
             boolean isMatch = checkForMatch(session, movieId);
             if (isMatch) {
-                // BROADCAST: Tell everyone in the room!
                 socketServer.getRoomOperations(roomCode).sendEvent("match_found", movieId);
             }
             return isMatch;

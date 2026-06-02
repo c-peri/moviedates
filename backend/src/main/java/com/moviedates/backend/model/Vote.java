@@ -22,9 +22,9 @@ public class Vote {
     @JoinColumn(name = "session_id")
     private Session session;
 
-    private long movieId; // The ID from TMDB API
+    private long movieId;
 
-    private boolean accepted; // true = Right Swipe (Accept), false = Left Swipe (Reject)
+    private boolean accepted;
 
     private LocalDateTime timestamp = LocalDateTime.now();
 }
