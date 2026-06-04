@@ -110,6 +110,23 @@ public class UserService {
     }
 
     @Transactional
+    public void registerSoloSwipe(Long userId, Integer movieId, boolean accepted) {
+        RegisteredUser user = (RegisteredUser) userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (accepted) {
+            if (!user.getFavouriteMovies().contains(movieId)) {
+                user.getFavouriteMovies().add(movieId);
+
+                if (cacheManager.getCache("users") != null && user.getEmail() != null) {
+                    cacheManager.getCache("users").evict(user.getEmail());
+                }
+                userRepository.save(user);
+            }
+        }
+    }
+
+    @Transactional
     public boolean deleteUserById(Long id) {
         if (userRepository.existsById(id)) {
             cacheManager.getCache("users").evict(id);

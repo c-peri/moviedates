@@ -41,6 +41,15 @@ public class UserController {
         return ResponseEntity.ok(tmdbJsonDeck);
     }
 
+    @PostMapping("/{id}/solo-swipe")
+    public ResponseEntity<?> handleSoloSwipe(
+            @PathVariable Long id,
+            @RequestBody SoloSwipeRequest request) {
+
+        userService.registerSoloSwipe(id, request.getMovieId(), request.isAccepted());
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
@@ -85,5 +94,11 @@ public class UserController {
     static class ProfileUpdateRequest {
         private String displayName;
         private String photoUrl;
+    }
+
+    @Data
+    static class SoloSwipeRequest {
+        private Integer movieId;
+        private boolean accepted;
     }
 }
