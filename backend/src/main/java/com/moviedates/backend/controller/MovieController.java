@@ -45,4 +45,10 @@ public class MovieController {
         Map<String, Object> filteredMovies = tmdbService.discoverMovies(genres);
         return ResponseEntity.ok(filteredMovies);
     }
+
+    @GetMapping("/genres")
+    public ResponseEntity<Map<String, Object>> getGenres() {
+        Map<String, Object> result = tmdbService.getGenres();
+        return ResponseEntity.ok(result);
+    }
 }

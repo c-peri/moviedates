@@ -35,6 +35,12 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @GetMapping(value = "/{id}/solo-deck", produces = "application/json")
+    public ResponseEntity<String> getSoloSwipeDeck(@PathVariable Long id) {
+        String tmdbJsonDeck = userService.getSoloSwipeDeckFromTmdb(id);
+        return ResponseEntity.ok(tmdbJsonDeck);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
@@ -58,6 +64,15 @@ public class UserController {
             @RequestBody ProfileUpdateRequest request) {
         User updatedUser = userService.updateProfile(id, request.getDisplayName(), request.getPhotoUrl());
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        boolean deleted = userService.deleteUserById(id);
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok("Account deleted successfully.");
     }
 
     @Data

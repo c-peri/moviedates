@@ -43,7 +43,7 @@ public class Session {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "session_participants",
+            name = "session_participnats",
             joinColumns = @JoinColumn(name = "session_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )

@@ -1,5 +1,6 @@
 package com.moviedates.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,6 +36,7 @@ public abstract class User implements UserDetails{
     @Column(unique = true)
     private String email;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "participants")
     @JsonIgnoreProperties({"movieDeck", "participants", "active", "createdAt"})
     private List<Session> sessions = new ArrayList<>();

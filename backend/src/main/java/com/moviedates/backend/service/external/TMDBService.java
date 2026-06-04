@@ -26,6 +26,10 @@ public class TMDBService {
         return restTemplate.getForObject(url, Map.class);
     }
 
+    public Map<String, Object> getGenres() {
+        String url = String.format("%s/genre/movie/list?api_key=%s&language=en-US", BASE_URL, apiKey);
+        return restTemplate.getForObject(url, Map.class);
+    }
 
     public Map<String, Object> discoverMovies(List<Integer> genreIds) {
         String genres = genreIds.stream().map(Object::toString).collect(Collectors.joining(","));

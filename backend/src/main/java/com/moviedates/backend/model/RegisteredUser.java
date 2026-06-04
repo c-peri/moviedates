@@ -1,5 +1,6 @@
 package com.moviedates.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,11 +15,13 @@ public class RegisteredUser extends User {
 
     private String password;
 
+    @JsonIgnore
     @ElementCollection
     @CollectionTable(name = "user_preferred_genres", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "genre_id")
     private List<Integer> preferredGenres = new ArrayList<>();
 
+    @JsonIgnore
     @ElementCollection
     @CollectionTable(name = "user_favourite_movies", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "movie_id")
