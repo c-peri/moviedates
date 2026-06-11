@@ -21,4 +21,5 @@ public class MovieDTO implements Serializable {
     private Double voteAverage;
     private String releaseDate;
     private List<String> genres;
+    private Integer runtime;
 }

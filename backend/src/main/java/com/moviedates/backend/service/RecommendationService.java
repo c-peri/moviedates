@@ -157,7 +157,8 @@ public class RecommendationService {
                     (String) data.get("overview"),
                     data.get("vote_average") != null ? ((Number) data.get("vote_average")).doubleValue() : 0.0,
                     (String) data.get("release_date"),
-                    genreNames
+                    genreNames,
+                    (Integer) data.get("runtime")
             );
 
         } catch (Exception e) {
