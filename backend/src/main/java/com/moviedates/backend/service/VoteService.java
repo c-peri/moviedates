@@ -7,6 +7,7 @@ import com.moviedates.backend.model.Vote;
 import com.moviedates.backend.repository.SessionRepository;
 import com.moviedates.backend.repository.VoteRepository;
 import com.moviedates.backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +23,16 @@ public class VoteService {
     @Autowired
     private SocketIOServer socketServer;
 
+    @Transactional
     public boolean submitSwipe(Long userId, String roomCode, Integer movieId, boolean accepted) {
         Session session = sessionRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (session.isFinished()) return false;
+
+        boolean alreadyVoted = voteRepository.existsBySessionIdAndUserIdAndMovieId(
+                session.getId(), userId, movieId);
+        if (alreadyVoted) return false;
 
         Vote vote = new Vote();
 
@@ -50,7 +58,7 @@ public class VoteService {
 
     private boolean checkForMatch(Session session, Integer movieId) {
         long acceptCount = voteRepository.countAcceptances(session.getId(), movieId);
-        long participantCount = session.getParticipants().size();
+        long participantCount = sessionRepository.countParticipants(session.getId());
         return participantCount > 0 && acceptCount >= participantCount;
     }
 }

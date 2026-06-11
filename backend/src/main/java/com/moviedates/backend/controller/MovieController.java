@@ -15,40 +15,31 @@ public class MovieController {
     @Autowired
     private TMDBService tmdbService;
 
-    // GET /api/movies/popular
     @GetMapping("/popular")
     public ResponseEntity<Map<String, Object>> getPopularMovies() {
-        Map<String, Object> popular = tmdbService.getPopularMovies();
-        return ResponseEntity.ok(popular);
+        return ResponseEntity.ok(tmdbService.getPopularMovies(1));
     }
 
-    // GET /api/movies/trending
     @GetMapping("/trending")
     public ResponseEntity<Map<String, Object>> getTrendingMovies() {
-        Map<String, Object> trending = tmdbService.getTrendingMovies();
-        return ResponseEntity.ok(trending);
+        return ResponseEntity.ok(tmdbService.getTopRatedMovies(1));
     }
 
-    // GET /api/movies/hidden-gems
     @GetMapping("/hidden-gems")
     public ResponseEntity<Map<String, Object>> getHiddenGems() {
-        Map<String, Object> gems = tmdbService.discoverHiddenGems();
-        return ResponseEntity.ok(gems);
+        return ResponseEntity.ok(tmdbService.discoverHiddenGems(1));
     }
 
-    // GET /api/movies/discover?genres=28,87
     @GetMapping("/discover")
     public ResponseEntity<Map<String, Object>> discoverMoviesByGenres(@RequestParam List<Integer> genres) {
         if (genres == null || genres.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Map<String, Object> filteredMovies = tmdbService.discoverMovies(genres);
-        return ResponseEntity.ok(filteredMovies);
+        return ResponseEntity.ok(tmdbService.discoverMovies(genres, 1));
     }
 
     @GetMapping("/genres")
     public ResponseEntity<Map<String, Object>> getGenres() {
-        Map<String, Object> result = tmdbService.getGenres();
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(tmdbService.getGenres());
     }
 }

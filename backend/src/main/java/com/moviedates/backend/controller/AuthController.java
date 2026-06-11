@@ -60,4 +60,16 @@ public class AuthController {
                 "user", guest
         ));
     }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        boolean[] isNew = {false};
+        RegisteredUser user = authService.loginWithGoogle(request.get("idToken"), isNew);
+        String token = jwtService.generateToken(user.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "user", user,
+                "isNewUser", isNew[0]
+        ));
+    }
 }

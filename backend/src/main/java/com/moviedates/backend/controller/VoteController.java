@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -38,7 +39,10 @@ public class VoteController {
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         if (session.isFinished()) {
-            return ResponseEntity.ok(Map.of("status", "finished", "match", session.getMatchedMovieId()));
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "ALREADY_MATCHED");
+            result.put("matchedMovieId", session.getMatchedMovieId());
+            return ResponseEntity.ok(result);
         }
 
         if (session.getSwipingStartedAt() == null) {

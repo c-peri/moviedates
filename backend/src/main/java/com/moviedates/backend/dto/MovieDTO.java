@@ -15,7 +15,7 @@ public class MovieDTO implements Serializable {
     private static final long serialVersionUID = 1L;
     private Integer id;
     private String title;
-    private String posterUrl;
+    private String posterPath;
     private String overview;
     private Double voteAverage;
     private String releaseDate;

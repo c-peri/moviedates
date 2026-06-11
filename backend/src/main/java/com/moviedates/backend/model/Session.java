@@ -35,7 +35,7 @@ public class Session {
 
     private long matchedMovieId;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "session_movie_deck", joinColumns = @JoinColumn(name = "session_id"))
     @Column(name = "movie_id")
     private List<Integer> movieDeck = new ArrayList<>();
@@ -57,4 +57,14 @@ public class Session {
         }
         return this.active;
     }
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "session_seen_movies", joinColumns = @JoinColumn(name = "session_id"))
+    @Column(name = "movie_id")
+    private List<Integer> seenMovies = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "session_next_movie_deck", joinColumns = @JoinColumn(name = "session_id"))
+    @Column(name = "movie_id")
+    private List<Integer> nextMovieDeck = new ArrayList<>();
 }

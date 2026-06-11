@@ -13,4 +13,8 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     Optional<Session> findByCode(String code);
 
     @Query("SELECT s FROM Session s WHERE s.swipingStartedAt < :cutoff AND s.finished = false")
-    List<Session> findTimedOutSessions(@Param("cutoff") LocalDateTime cutoff);}
+    List<Session> findTimedOutSessions(@Param("cutoff") LocalDateTime cutoff);
+
+    @Query("SELECT COUNT(u) FROM Session s JOIN s.participants u WHERE s.id = :sessionId")
+    long countParticipants(@Param("sessionId") Long sessionId);
+}

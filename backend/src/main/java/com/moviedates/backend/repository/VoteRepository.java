@@ -43,4 +43,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
             "HAVING COUNT(v.id) >= :minPerUser")
     Long countUsersMinimumSwipes(@Param("sessionId") Long sessionId,
                                      @Param("minPerUser") Long minPerUser);
+
+    @Query("SELECT COUNT(v) > 0 FROM Vote v WHERE v.session.id = :sessionId AND v.user.id = :userId AND v.movieId = :movieId")
+    boolean existsBySessionIdAndUserIdAndMovieId(@Param("sessionId") Long sessionId, @Param("userId") Long userId, @Param("movieId") Integer movieId);
 }

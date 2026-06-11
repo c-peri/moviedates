@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -33,7 +35,7 @@ public class SocketModule {
         this.server.addEventListener("join_room", String.class, onJoinRoom());
         this.server.addEventListener("request_deck", String.class, onRequestDeck());
         this.server.addEventListener("submit_swipe", SwipePayload.class, onSwipeSubmitted());
-    }
+        this.server.addEventListener("start_session", DeckPayload.class, onStartSession());    }
 
     private ConnectListener onConnected() {
         return client -> log.info("Client paired to real-time swiping socket: {}", client.getSessionId());
@@ -91,6 +93,21 @@ public class SocketModule {
                 }
             }
         };
+    }
+
+    private DataListener<DeckPayload> onStartSession() {
+        return (client, payload, ackSender) -> {
+            server.getRoomOperations(payload.getRoomCode())
+                    .sendEvent("session_started", payload.getMovies());
+            log.info("session_started broadcast to room {} with {} movies",
+                    payload.getRoomCode(), payload.getMovies().size());
+        };
+    }
+
+    @Data
+    static class DeckPayload {
+        private String roomCode;
+        private List<MovieDTO> movies;
     }
 
     @Data
