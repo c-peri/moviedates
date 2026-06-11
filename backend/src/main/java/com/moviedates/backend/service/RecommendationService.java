@@ -132,26 +132,38 @@ public class RecommendationService {
 
     @Cacheable(value = "movieDetails", key = "#movieId", unless = "#result == null")
     public MovieDTO fetchSingleMovieDetails(Integer movieId) {
-        String url = tmdbBaseUrl + "/movie/" + movieId + "?api_key=" + apiKey;
+        String url = tmdbBaseUrl + movieId + "?api_key=" + apiKey + "&language=en-US";
         try {
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> data = restTemplate.getForObject(url, Map.class);
+            if (data == null) return null;
 
-            if (response != null) {
-                MovieDTO dto = new MovieDTO(
-                        (Integer) response.get("id"),
-                        (String) response.get("title"),
-                        tmdbImgUrl + response.get("poster_path"),
-                        (String) response.get("overview"),
-                        (Double) response.get("vote_average"),
-                        (String) response.get("release_date")
-                );
-                log.info("Successfully found from TMDB for ID: {}", movieId);
-                return  dto;
+            List<String> genreNames = new ArrayList<>();
+            Object genresObj = data.get("genres");
+            if (genresObj instanceof List) {
+                for (Object g : (List<?>) genresObj) {
+                    if (g instanceof Map) {
+                        Object name = ((Map<?, ?>) g).get("name");
+                        if (name != null) genreNames.add(name.toString());
+                    }
+                }
             }
+
+            log.info("Successfully found from TMDB for ID: {}", movieId);
+
+            return new MovieDTO(
+                    (Integer) data.get("id"),
+                    (String) data.get("title"),
+                    tmdbImgUrl + data.get("poster_path"),
+                    (String) data.get("overview"),
+                    data.get("vote_average") != null ? ((Number) data.get("vote_average")).doubleValue() : 0.0,
+                    (String) data.get("release_date"),
+                    genreNames
+            );
+
         } catch (Exception e) {
-            log.error("TMDB call failed for ID " + movieId, e);
+            log.error("TMDB call failed for ID: " + movieId, e);
+            return null;
         }
-        return null;
     }
 
     @Cacheable(value = "streamingProviders", key = "#movieId", unless = "#result == null || #result.isEmpty()")

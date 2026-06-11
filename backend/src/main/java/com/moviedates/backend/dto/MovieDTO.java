@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -19,4 +20,5 @@ public class MovieDTO implements Serializable {
     private String overview;
     private Double voteAverage;
     private String releaseDate;
+    private List<String> genres;
 }
