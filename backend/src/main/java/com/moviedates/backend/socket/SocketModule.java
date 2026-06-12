@@ -35,7 +35,9 @@ public class SocketModule {
         this.server.addEventListener("join_room", String.class, onJoinRoom());
         this.server.addEventListener("request_deck", String.class, onRequestDeck());
         this.server.addEventListener("submit_swipe", SwipePayload.class, onSwipeSubmitted());
-        this.server.addEventListener("start_session", DeckPayload.class, onStartSession());    }
+        this.server.addEventListener("start_session", DeckPayload.class, onStartSession());
+        this.server.addEventListener("request_next_deck", String.class, onRequestNextDeck());
+    }
 
     private ConnectListener onConnected() {
         return client -> log.info("Client paired to real-time swiping socket: {}", client.getSessionId());
@@ -101,6 +103,38 @@ public class SocketModule {
                     .sendEvent("session_started", payload.getMovies());
             log.info("session_started broadcast to room {} with {} movies",
                     payload.getRoomCode(), payload.getMovies().size());
+        };
+    }
+
+    private DataListener<String> onRequestNextDeck() {
+        return (client, roomCode, ackSender) -> {
+            Session session = sessionService.getSessionByCode(roomCode);
+            if (session == null) return;
+
+            synchronized (this) {
+                if (session.isNextDeckRequested()) {
+                    log.info("Next deck already requested/generated for room {}, skipping", roomCode);
+                    return;
+                }
+                session.setNextDeckRequested(true);
+                sessionService.save(session);
+            }
+
+            List<Integer> newDeck = recommendationService.generateWeightedDeck(session, session.getSeenMovies());
+            session.setMovieDeck(new ArrayList<>(newDeck));
+            session.getSeenMovies().addAll(newDeck);
+            sessionService.save(session);
+
+            List<MovieDTO> nextDeck = newDeck.stream()
+                    .map(recommendationService::fetchSingleMovieDetails)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            server.getRoomOperations(roomCode).sendEvent("next_deck_ready", nextDeck);
+            log.info("next_deck_ready broadcast to room {}: {} movies", roomCode, nextDeck.size());
+
+            session.setNextDeckRequested(false);
+            sessionService.save(session);
         };
     }
 

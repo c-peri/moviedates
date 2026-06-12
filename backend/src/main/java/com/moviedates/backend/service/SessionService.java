@@ -46,6 +46,10 @@ public class SessionService {
         return sessionRepository.save(session);
     }
 
+    public Session save(Session session) {
+        return sessionRepository.save(session);
+    }
+
     public Session getSessionByCode(String code) {
         return sessionRepository.findByCode(code).orElse(null);
     }

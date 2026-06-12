@@ -58,14 +58,24 @@ public class SessionController {
         if (session == null) return ResponseEntity.status(404).build();
 
         List<Integer> deckIds = session.getMovieDeck();
+        int participantCount = (int) sessionRepository.countParticipants(session.getId());
 
         if (deckIds == null || deckIds.isEmpty()) {
             List<Integer> newDeck = recommendationService.generateWeightedDeck(session, session.getSeenMovies());
             session.setMovieDeck(new ArrayList<>(newDeck));
             session.getSeenMovies().addAll(newDeck);
+            session.setDeckFetchCount(0);
             sessionRepository.save(session);
             deckIds = newDeck;
         }
+        session.setDeckFetchCount(session.getDeckFetchCount() + 1);
+
+        if (session.getDeckFetchCount() >= participantCount) {
+            session.setMovieDeck(new ArrayList<>());
+            session.setDeckFetchCount(0);
+        }
+
+        sessionRepository.save(session);
 
         List<MovieDTO> cardStack = deckIds.stream()
                 .map(recommendationService::fetchSingleMovieDetails)

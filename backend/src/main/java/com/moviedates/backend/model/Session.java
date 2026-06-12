@@ -67,4 +67,10 @@ public class Session {
     @CollectionTable(name = "session_next_movie_deck", joinColumns = @JoinColumn(name = "session_id"))
     @Column(name = "movie_id")
     private List<Integer> nextMovieDeck = new ArrayList<>();
+
+    @Column(name = "deck_fetch_count")
+    private int deckFetchCount = 0;
+
+    @Column(name = "next_deck_requested")
+    private boolean nextDeckRequested = false;
 }

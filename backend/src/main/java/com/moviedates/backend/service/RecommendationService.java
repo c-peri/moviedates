@@ -169,7 +169,7 @@ public class RecommendationService {
 
     @Cacheable(value = "streamingProviders", key = "#movieId", unless = "#result == null || #result.isEmpty()")
     public List<StreamingProviderDTO> fetchStreamingProviders(Integer movieId, String countryCode) {
-        String url = tmdbBaseUrl + movieId + "/watch/providers?api_key=" + apiKey;
+        String url = tmdbBaseUrl + "/movie/" + movieId + "/watch/providers?api_key=" + apiKey;
         try {
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             if (response == null) return Collections.emptyList();
