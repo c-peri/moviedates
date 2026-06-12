@@ -82,9 +82,6 @@ public class SessionController {
                 .filter(dto -> dto != null)
                 .collect(Collectors.toList());
 
-        session.setMovieDeck(new ArrayList<>());
-        sessionRepository.save(session);
-
         return ResponseEntity.ok(cardStack);
     }
 
